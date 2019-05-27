@@ -18,7 +18,7 @@ trait RedisDbT {
 }
 object RedisDbT {
 
-  case class AddElementRequest(key : String, value : String, duration : Option[FiniteDuration])
+  case class AddElementRequest(key : String, value : String, duration : Option[FiniteDuration] = None)
   case class AddElementResult(status : Boolean)
 
   case class DeleteElementRequest(key : String)
@@ -27,7 +27,7 @@ object RedisDbT {
   case class FetchElementQuery(key : String)
   case class FetchElementResult(result : Option[String])
 
-  case class EnqueueElementRequest(queueName : String, value : String , duration : Option[FiniteDuration])
+  case class EnqueueElementRequest(queueName : String, value : String , duration : Option[FiniteDuration] = None )
   case class EnqueueElementResponse(status : Boolean)
 
   case class DequeueElementRequest(queueName : String)
@@ -44,7 +44,7 @@ private[DB] class RedisDbService(
 
 
   implicit val actorSystem = context.system
-  val client  = RedisClient(host,port)
+  lazy val client  = RedisClient(host,port)
   implicit val _timeout = timeout
 
   import RedisDbT._

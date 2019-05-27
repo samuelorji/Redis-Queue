@@ -15,12 +15,12 @@ object Listener{
   case object Poll
 
   def createListener(
-                      worker : Props,
-                     redis : RedisDbT,
-                     maxNumTries : Int,
-                     queueName : String,
-                     delay : FiniteDuration
-                    ) = {
+    worker : Props,
+   redis : RedisDbT,
+   maxNumTries : Int,
+   queueName : String,
+   delay : FiniteDuration
+  ) = {
     Props(new Listener(worker,redis,maxNumTries,queueName,delay))
   }
 }
@@ -32,7 +32,6 @@ object Listener{
                   queueName : String,
                   delay : FiniteDuration
 ) extends Actor {
-
 
    val workerActor = context.actorOf(worker)
    import Listener._
@@ -69,6 +68,7 @@ object Listener{
    private var scheduler : Cancellable = null
 
    private def scheduleFetch = {
+      numTimes  = 0
       scheduler = context.system.scheduler.scheduleOnce(delay, self, Poll)
 
    }
