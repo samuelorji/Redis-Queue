@@ -1,6 +1,6 @@
-package Redis
+package Redis.DB
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import redis.RedisClient
 
 import scala.concurrent.duration.FiniteDuration
@@ -12,8 +12,8 @@ trait RedisDbT {
   val port: Int
   val timeout: FiniteDuration
 
-  implicit val system : ActorSystem
-  def getRedisInstance = system.actorOf(Props(new RedisDbService(host,port,timeout)))
+  implicit val _system : ActorSystem
+  def getRedisInstance = _system.actorOf(Props(new RedisDbService(host,port,timeout)))
 
 }
 object RedisDbT {
@@ -35,7 +35,7 @@ object RedisDbT {
 
 }
 
-private[Redis] class RedisDbService(
+private[DB] class RedisDbService(
  val host: String,
  val port: Int,
  val timeout: FiniteDuration
@@ -48,6 +48,7 @@ private[Redis] class RedisDbService(
   implicit val _timeout = timeout
 
   import RedisDbT._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def receive: Receive = {
