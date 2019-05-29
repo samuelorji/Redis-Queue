@@ -3,18 +3,18 @@ package Redis
 import Redis.DB.RedisDbT
 import Redis.DB.RedisDbT.EnqueueElementRequest
 import Redis.Manager.QueueManager
-import Redis.listener.Listener
+import Redis.scheduler.Scheduler
 import Redis.service.MessagingService
 import Redis.service.MessagingService.{QueueElement, SendMessageRequest, SendMessageResponse}
 import Redis.worker.Worker
 import akka.actor.{ActorRef, ActorSystem, Props}
-import util.JsonHelper
-import spray.json._
 import akka.pattern.ask
 import akka.util.Timeout
+import spray.json._
+import util.JsonHelper
 
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 object Run extends App
@@ -57,7 +57,7 @@ object Run extends App
         println(s"Not Enqeueing ${queuedData.data} again,since it has been enqueued ${queuedData.numRetry} time(s)")
       }
 
-      (messagingService ? queuedData.data.copy(retry = false)).onComplete{
+      (messagingService ? queuedData.data.copy(enqueue = false)).onComplete{
         case Success(res) =>
           res match {
             case SendMessageResponse(true)  =>
@@ -77,7 +77,7 @@ object Run extends App
 
   val worker = Worker.createWorker(queueName , x => workerFunc(x))
 
-  val SupportListener = Listener.createListener(
+  val SupportListener = Scheduler.createScheduler(
                             worker     = worker,
                             redis      = redis,
                             maxNumDeq  = 3,
@@ -85,6 +85,6 @@ object Run extends App
                             delay      = FiniteDuration(10, "seconds")
                           )
 
-  val queueManagers = system.actorOf(QueueManager.createListeners(List(SupportListener)))
+  val queueManagers = system.actorOf(QueueManager.createSchedulers(List(SupportListener)))
 
 }

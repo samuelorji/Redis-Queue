@@ -1,30 +1,28 @@
-package Redis.listener
+package Redis.scheduler
 
 import Redis.DB.RedisDbT
 import Redis.DB.RedisDbT._
 import Redis.worker.Worker.RedisElement
-import Redis.worker
-import Redis.worker
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, Props}
+import akka.actor.{Actor, ActorLogging, Cancellable, Props}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.FiniteDuration
 
-object Listener{
+object Scheduler{
   case object Poll
 
-  def createListener(
+  def createScheduler(
     worker : Props,
    redis : RedisDbT,
    maxNumDeq : Int,
    queueName : String,
    delay : FiniteDuration
   ) = {
-    Props(new Listener(worker,redis,maxNumDeq,queueName,delay))
+    Props(new Scheduler(worker,redis,maxNumDeq,queueName,delay))
   }
 }
 
- private[listener] class Listener (
+ private[scheduler] class Scheduler(
     worker : Props,
     redis : RedisDbT,
     maxNumDeq : Int,
@@ -34,7 +32,7 @@ object Listener{
   with ActorLogging {
    assert(maxNumDeq > 1)
    val workerActor = context.actorOf(worker)
-   import Listener._
+   import Scheduler._
 
    private val redisClient = redis.getRedisInstance
    private var numTimes = 0

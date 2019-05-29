@@ -1,11 +1,11 @@
 package Redis.Manager
 
-import Redis.listener.Listener.Poll
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
+import Redis.scheduler.Scheduler.Poll
+import akka.actor.{Actor, ActorLogging, Props}
 
 object QueueManager {
   case object Start
-  def createListeners(listeners : List[Props]) : Props = Props(new QueueManager(listeners))
+  def createSchedulers(schedulers : List[Props]) : Props = Props(new QueueManager(schedulers))
 }
 private [Manager] class QueueManager(listeners : List[Props]) extends Actor with ActorLogging {
   import QueueManager._
