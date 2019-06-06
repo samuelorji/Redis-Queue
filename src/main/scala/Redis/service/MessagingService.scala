@@ -12,7 +12,7 @@ import scala.util.{Failure, Success}
 
 object MessagingService {
   case class QueueElement[T](data : T , numRetry : Int = 1)
-  case class SendMessageRequest(phoneNumber : String, msg : String, enqueue : Boolean)
+  case class SendMessageRequest(phoneNumber : String, msg : String, enqueue : Boolean, queueName : String)
   case class SendMessageResponse(status : Boolean)
 }
 trait MessagingService extends Actor
@@ -36,17 +36,22 @@ trait MessagingService extends Actor
       )
       sendMsgFut onComplete{
         case Success(res) =>
+          res match {
+            case _   =>
+            case false  =>
+              val msgJson   = QueueElement(req).toJson.toString()
+              if(req.enqueue) {
+              redisClient ! EnqueueElementRequest(req.queueName, msgJson)
+            }
+          }
           currentSender ! SendMessageResponse(res)
         case Failure(ex)  =>
           log.error("Error occured while sending a message, error Message : {} ", ex.getMessage)
-          //here we now queue it up in redis
-          val queueName = "Support"
           val msgJson   = QueueElement(req).toJson.toString()
           if(req.enqueue) {
-            redisClient ! EnqueueElementRequest(queueName, msgJson)
+            redisClient ! EnqueueElementRequest(req.queueName, msgJson)
           }
           currentSender ! SendMessageResponse(false)
-
       }
   }
 }

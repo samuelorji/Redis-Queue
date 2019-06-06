@@ -6,7 +6,7 @@ import DefaultJsonProtocol._
 
 trait JsonHelper {
 
-  implicit val messageFormat        = jsonFormat3(SendMessageRequest)
+  implicit val messageFormat        = jsonFormat4(SendMessageRequest)
   implicit val queueElementFormat1  = jsonFormat2(QueueElement[SendMessageRequest])
 
 

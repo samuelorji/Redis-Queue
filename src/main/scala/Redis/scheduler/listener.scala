@@ -31,7 +31,7 @@ object Scheduler{
 ) extends Actor
   with ActorLogging {
    assert(maxNumDeq > 1)
-   val workerActor = context.actorOf(worker)
+   val workerActor = context.actorOf(worker, queueName)
    import Scheduler._
 
    private val redisClient = redis.getRedisInstance

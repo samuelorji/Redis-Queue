@@ -21,17 +21,16 @@ object Run extends App
  with JsonHelper{
 
   val queueName : String = "Support"
-
   val redisHost : String = "localhost"
-  val redisPort : Int = 6379
+  val redisPort : Int    = 6379
 
   implicit val system : ActorSystem = ActorSystem()
   implicit val timeout : Timeout    = FiniteDuration(5,"seconds")
 
   val redis = new RedisDbT() {
-    override val host: String = redisHost
-    override val port: Int = redisPort
-    override val timeout: FiniteDuration = FiniteDuration(5,"seconds")
+    override val host: String                  = redisHost
+    override val port: Int                     = redisPort
+    override val timeout: FiniteDuration       = FiniteDuration(5,"seconds")
     override implicit val _system: ActorSystem = system
   }
 
@@ -40,7 +39,7 @@ object Run extends App
     override def getRedisClient: RedisDbT = redis
   }))
 
-  (1 to 10).foreach(x => messagingService ! SendMessageRequest(x.toString,x.toString,true)) //this is simulating sending 10 messages to the messaging service
+  (1 to 10).foreach(x => messagingService ! SendMessageRequest(x.toString,x.toString,true,queueName)) //this is simulating sending 10 messages to the messaging service
 
   /*
   this is the worker function that we will supply when creating our worker,
@@ -51,7 +50,7 @@ object Run extends App
       def shouldRetry(numTimes: Int): Boolean  = numTimes >= 1
       def handleQueuedElement(num: Int) : Unit  = if (shouldRetry(num)) {
         println(s"Data is ${queuedData.data} and number of times tried is ${queuedData.numRetry}")
-        redisClient ! EnqueueElementRequest(queueName, queuedData.copy(numRetry = num - 1).toJson.toString())
+        redisClient ! EnqueueElementRequest(queuedData.data.queueName, queuedData.copy(numRetry = num - 1).toJson.toString())
       } else {
         //LOG Error That the user cannot be reached after trying NumTimes
         println(s"Not Enqeueing ${queuedData.data} again,since it has been enqueued ${queuedData.numRetry} time(s)")
@@ -75,9 +74,9 @@ object Run extends App
     }
   }
 
-  val worker = Worker.createWorker(queueName , x => workerFunc(x))
+  val worker = Worker.createWorker(workerFunc)
 
-  val SupportListener = Scheduler.createScheduler(
+  val supportScheduler = Scheduler.createScheduler(
                             worker     = worker,
                             redis      = redis,
                             maxNumDeq  = 3,
@@ -85,6 +84,6 @@ object Run extends App
                             delay      = FiniteDuration(10, "seconds")
                           )
 
-  val queueManagers = system.actorOf(QueueManager.createSchedulers(List(SupportListener)))
+  val queueManagers = system.actorOf(QueueManager.createSchedulers(List(supportScheduler)))
 
 }
